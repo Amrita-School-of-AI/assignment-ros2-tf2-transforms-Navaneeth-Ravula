@@ -35,12 +35,46 @@ public:
         : Node("tf_broadcaster")
     {
         // TODO: Create the transform broadcaster here
+        // Create the transform broadcaster
+tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+        // Create timer (100ms)
+        timer_ = this->create_wall_timer(
+            100ms,
+            std::bind(&TFBroadcaster::timer_callback, this)
+        );
 
         // TODO: Create the timer here
     }
 
 private:
     // TODO: Define timer_callback function here
+    void timer_callback()
+    {
+    geometry_msgs::msg::TransformStamped t;
+
+    // Set timestamp
+    t.header.stamp = this->get_clock()->now();
+    t.header.frame_id = "world";
+    t.child_frame_id = "robot";
+
+    // Get time in seconds
+    double time_seconds = this->get_clock()->now().seconds();
+
+    // Circular motion
+    t.transform.translation.x = 2.0 * std::cos(time_seconds);
+    t.transform.translation.y = 2.0 * std::sin(time_seconds);
+    t.transform.translation.z = 0.0;
+
+    // Identity quaternion
+    t.transform.rotation.x = 0.0;
+    t.transform.rotation.y = 0.0;
+    t.transform.rotation.z = 0.0;
+    t.transform.rotation.w = 1.0;
+
+    // Broadcast transform
+    tf_broadcaster_->sendTransform(t);
+    }
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
